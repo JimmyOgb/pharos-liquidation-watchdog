@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Liquidation Watchdog — Autonomous DeFi Risk Sentinel</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Top Navigation -->
+    <header class="top-nav">
+      <div class="brand-group">
+        <div class="logo-mark">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M12 8v4"/>
+            <path d="M12 16h.01"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">Liquidation Watchdog</h1>
+          <p class="brand-subtitle">Autonomous Cross-Network Lending Sentinel</p>
+        </div>
+      </div>
+
+      <div class="network-badges">
+        <span class="badge badge-network">
+          <span class="dot-live"></span> Base Mainnet (8453)
+        </span>
+        <span class="badge badge-protocol">Aave V3 Protocol</span>
+        <span class="badge badge-pharos">Pharos Agent Gateway</span>
+        <span class="badge badge-mode">Read-Only Non-Custodial</span>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-content">
+      <!-- Top Input & Controls Bar -->
+      <section class="card control-card">
+        <div class="control-row">
+          <div class="input-group flex-grow">
+            <label for="walletInput" class="input-label">Lending Account Address (EVM 0x...)</label>
+            <div class="input-with-button">
+              <input
+                type="text"
+                id="walletInput"
+                class="address-input"
+                placeholder="0x... EVM public wallet address"
+                value="0xcbc3301782507d85e57db83d7d19db2a82478570"
+                spellcheck="false"
+              />
+              <button id="inspectBtn" class="btn btn-primary">
+                <span id="btnSpinner" class="spinner hidden"></span>
+                <span id="btnLabel">Inspect Position</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="presets-group">
+            <span class="presets-label">Preset Fixtures:</span>
+            <button id="presetBorrowerBtn" class="btn btn-ghost btn-sm" title="Verified live borrower on Base">
+              Verified Borrower
+            </button>
+            <button id="presetEmptyBtn" class="btn btn-ghost btn-sm" title="Zero debt baseline fixture">
+              Zero-Debt Baseline
+            </button>
+          </div>
+        </div>
+
+        <!-- Monitoring Sentinel Bar -->
+        <div class="sentinel-bar">
+          <div class="sentinel-item">
+            <span class="sentinel-label">Active Browser Sentinel:</span>
+            <select id="pollIntervalSelect" class="sentinel-select">
+              <option value="0">Off (Manual Only)</option>
+              <option value="15000">Poll every 15s</option>
+              <option value="30000" selected>Poll every 30s</option>
+              <option value="60000">Poll every 60s</option>
+            </select>
+          </div>
+
+          <div class="sentinel-item heartbeat-status">
+            <span id="heartbeatDot" class="heartbeat-dot idle"></span>
+            <span id="heartbeatText">Sentinel Idle</span>
+          </div>
+
+          <div class="sentinel-item">
+            <span class="sentinel-label">Next Poll:</span>
+            <span id="countdownText" class="mono-value">--</span>
+          </div>
+
+          <div class="sentinel-item">
+            <span class="sentinel-label">Observation Block:</span>
+            <span id="blockNumberText" class="mono-value">--</span>
+          </div>
+
+          <div class="sentinel-item">
+            <span id="freshnessBadge" class="badge badge-success">READY</span>
+          </div>
+        </div>
+
+        <!-- Threshold Configurations Collapsible -->
+        <details class="thresholds-accordion">
+          <summary class="thresholds-summary">
+            <span>⚙ Custom Risk Thresholds (Warning: <strong id="sumWarn">1.30</strong>, Critical: <strong id="sumCrit">1.10</strong>, Target: <strong id="sumTarget">1.50</strong>)</span>
+            <span class="summary-toggle-text">Configure</span>
+          </summary>
+          <div class="thresholds-form">
+            <div class="threshold-field">
+              <label for="warnInput">Warning Threshold (HF)</label>
+              <input type="number" id="warnInput" step="0.05" min="1.15" max="2.00" value="1.30" />
+              <small>Triggers early caution alert</small>
+            </div>
+            <div class="threshold-field">
+              <label for="critInput">Critical Threshold (HF)</label>
+              <input type="number" id="critInput" step="0.05" min="1.01" max="1.25" value="1.10" />
+              <small>Triggers urgent liquidation alert</small>
+            </div>
+            <div class="threshold-field">
+              <label for="targetInput">Safety Target (HF)</label>
+              <input type="number" id="targetInput" step="0.05" min="1.30" max="3.00" value="1.50" />
+              <small>Baseline used for remedy calculations</small>
+            </div>
+            <div class="threshold-actions">
+              <button id="applyThresholdsBtn" class="btn btn-secondary btn-sm">Apply Thresholds</button>
+              <button id="resetThresholdsBtn" class="btn btn-ghost btn-sm">Reset Defaults</button>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- Architecture & Monitoring Notice -->
+      <aside class="notice-banner">
+        <div class="notice-icon">ℹ</div>
+        <div class="notice-body">
+          <strong>Non-Custodial Architecture & Monitoring Disclosure:</strong>
+          This application reads verified on-chain data directly from the Base Aave V3 Pool contract without private keys or write transactions. The Active Browser Sentinel polls continuously while this browser tab remains open. Polling automatically pauses when the tab closes. Background scheduled cron on Vercel Hobby is architecturally limited to once every 24 hours.
+        </div>
+      </aside>
+
+      <!-- Position Overview Dashboard (Hero) -->
+      <section class="overview-grid">
+        <!-- Hero Health Factor Card -->
+        <div class="card hero-hf-card">
+          <div class="card-header-simple">
+            <span class="card-tag">Lending Position Health</span>
+            <span id="riskStateBadge" class="badge badge-risk-healthy">HEALTHY</span>
+          </div>
+          <div class="hf-display-group">
+            <div id="hfNumber" class="hf-number">--</div>
+            <div class="hf-caption">Health Factor</div>
+          </div>
+          <div class="hf-meter-container">
+            <div class="hf-meter-bar">
+              <div id="hfMeterFill" class="hf-meter-fill" style="width: 100%;"></div>
+            </div>
+            <div class="hf-meter-markers">
+              <span class="marker marker-crit">1.00 Liquidation</span>
+              <span class="marker marker-warn">1.30 Warning</span>
+              <span class="marker marker-safe">1.50 Target</span>
+            </div>
+          </div>
+          <div id="hfStatusMessage" class="hf-status-message">
+            Enter an address and click Inspect Position.
+          </div>
+        </div>
+
+        <!-- Position Balance Metrics -->
+        <div class="card metrics-card">
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <span class="metric-label">Total Collateral</span>
+              <span id="totalCollateralUSD" class="metric-val">$0.00</span>
+              <span class="metric-sub">Base currency valuation</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Total Debt</span>
+              <span id="totalDebtUSD" class="metric-val">$0.00</span>
+              <span class="metric-sub">Accrued borrowing balance</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Current Liquidation Threshold</span>
+              <span id="currentLtPct" class="metric-val">0.00%</span>
+              <span class="metric-sub">Weighted asset threshold</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Available Borrows</span>
+              <span id="availableBorrowsUSD" class="metric-val">$0.00</span>
+              <span class="metric-sub">Borrowing capacity remaining</span>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <span class="footer-label">Last Observed UTC:</span>
+            <span id="obsTimestamp" class="mono-value">--</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recommendations Panel -->
+      <section class="card">
+        <div class="section-title-row">
+          <div>
+            <h2 class="section-title">Risk Remediation & Recommendations</h2>
+            <p class="section-desc">Deterministic recommendations to bring Health Factor to safety target (1.50). Asset-specific liquidation thresholds and protocol guardrails enforced.</p>
+          </div>
+          <span class="badge badge-estimate">ESTIMATE — NOT AN EXECUTABLE TRANSACTION</span>
+        </div>
+
+        <div id="recommendationsContainer" class="recommendations-container">
+          <div class="empty-state">No position loaded. Recommendations will appear here once an account is inspected.</div>
+        </div>
+      </section>
+
+      <!-- Asset Breakdown Table -->
+      <section class="card">
+        <div class="section-title-row">
+          <div>
+            <h2 class="section-title">Asset Breakdown & Collateral Status</h2>
+            <p class="section-desc">Underlying tokens, aTokens, variable debt, oracle prices, and collateral eligibility.</p>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th>Deposit / aToken Balance</th>
+                <th>Debt Balance</th>
+                <th>Oracle Price (USD)</th>
+                <th>Collateral USD</th>
+                <th>Debt USD</th>
+                <th>Collateral Status</th>
+              </tr>
+            </thead>
+            <tbody id="assetsTableBody">
+              <tr>
+                <td colspan="7" class="empty-cell">No assets loaded.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Timestamped Alert Ledger -->
+      <section class="card">
+        <div class="section-title-row">
+          <div>
+            <h2 class="section-title">Timestamped Alert Ledger</h2>
+            <p class="section-desc">Audit history of threshold crossings, state transitions, and recovery events.</p>
+          </div>
+          <button id="clearAlertsBtn" class="btn btn-ghost btn-sm">Clear History</button>
+        </div>
+
+        <div class="alerts-ledger-container" id="alertsLedger">
+          <div class="empty-state">No alerts recorded yet in this session.</div>
+        </div>
+      </section>
+
+      <!-- Provenance & Cryptographic Audit Trail -->
+      <section class="card provenance-card">
+        <details class="provenance-accordion">
+          <summary class="provenance-summary">
+            <span>🛡 Cryptographic Audit Trail & Pharos MCP Provenance</span>
+            <span class="summary-toggle-text">Inspect Verification Hashes</span>
+          </summary>
+          <div class="provenance-content">
+            <p class="provenance-intro">
+              Every on-chain RPC response, oracle valuation, and Pharos MCP call is logged with a local SHA-256 digest ensuring zero tampering.
+            </p>
+            <div class="table-responsive">
+              <table class="data-table provenance-table">
+                <thead>
+                  <tr>
+                    <th>Step</th>
+                    <th>Source Network / MCP</th>
+                    <th>Endpoint</th>
+                    <th>SHA-256 Digest</th>
+                    <th>Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody id="provenanceTableBody">
+                  <tr>
+                    <td colspan="5" class="empty-cell">No provenance records yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-content">
+        <div>
+          <strong>Liquidation Watchdog</strong> — Autonomous DeFi Risk Sentinel
+        </div>
+        <div class="footer-links">
+          <span>Base Aave V3 Gateway</span>
+          <span>Pharos AI Orchestration</span>
+          <span>Zero Custody</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
